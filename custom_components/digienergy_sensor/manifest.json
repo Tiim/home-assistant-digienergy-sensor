@@ -1,0 +1,9 @@
+{
+  "domain": "digienergy_sensor",
+  "name": "DigiEnergy Sensor",
+  "documentation": "",
+  "version": "0.0.1",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": ["requests==2.25.1"]
+}
