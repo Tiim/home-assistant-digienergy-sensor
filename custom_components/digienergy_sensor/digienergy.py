@@ -2,6 +2,8 @@ import requests
 import re
 
 
+REQ_TIMEOUT=15
+
 class DigiEnergy:
     def __init__(self, url, username=None, password=None) -> None:
 
@@ -9,7 +11,9 @@ class DigiEnergy:
         self.username = username
         self.password = password
 
-        self.token = self.get_token()
+        # load token at startup
+        self.token = None
+        #self.token = self.get_token()
 
         pass
 
@@ -26,7 +30,7 @@ class DigiEnergy:
                 "Content-Type": "application/x-www-form-urlencoded",
             }
             url = self.url + "/config/index.htm"
-            html = requests.post(url, headers=headers, cookies={}, data=data).text
+            html = requests.post(url, headers=headers, cookies={}, data=data, timeout=REQ_TIMEOUT).text
             matcher = re.search("mg=(-?\d+)&ac", html)
             return matcher.group(1)
         else:
@@ -38,12 +42,16 @@ class DigiEnergy:
 
     def get_sensor_value(self, sensors=[]):
 
-        data = self.load_data(sensors)
-
-        if "§§§" in data:
-            self.token = self.get_token()
+        try:
             data = self.load_data(sensors)
 
+            if "§§§" in data:
+                self.token = self.get_token()
+                data = self.load_data(sensors)
+        except:
+            # return null state for all sensors if error occured
+            return [None for s in sensors]
+            pass
         values = data.split("\n")[: len(sensors)]
 
         result = []
@@ -56,7 +64,7 @@ class DigiEnergy:
         params = {"V": sensors}
         if not self.token is None:
             params["mg"] = self.token
-        return requests.get(self.url + "/config/a.dwh", params=params).text
+        return requests.get(self.url + "/config/a.dwh", params=params, timeout=REQ_TIMEOUT).text
 
 
 def main():
